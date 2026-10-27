@@ -40,6 +40,11 @@ bench get-app whatsapp_desk /path/to/whatsapp_desk
 bench --site <site> install-app whatsapp_desk
 ```
 
+## Made by MithTech
+
+whatsapp_desk is built and maintained by [MithTech](https://mith.tech), Frappe specialists in Bengaluru.
+For WhatsApp on ERPNext set up and run for you, see [WhatsApp and ERPNext integration](https://mith.tech/services/integrations/whatsapp-erpnext).
+
 ## License
 
 MIT (see `license.txt`).
