@@ -1,1 +1,0 @@
-import{_ as t,c as n,b as o,l as s}from"./index-CQYndNrq.js";const r={},c={class:"flex h-full items-center justify-center text-ink-gray-5"};function a(l,e){return s(),n("div",c,[...e[0]||(e[0]=[o("p",null,"Page not found.",-1)])])}const _=t(r,[["render",a]]);export{_ as default};

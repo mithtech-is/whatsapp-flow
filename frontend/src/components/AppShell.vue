@@ -10,10 +10,6 @@ const me = ref(window.user || '')
 const NAV = [
   { to: '/', icon: '💬', label: 'Inbox', match: (p) => p === '/' || p.startsWith('/?') },
   { to: '/flows', icon: '🤖', label: 'Flows', match: (p) => p.startsWith('/flows') },
-  { to: '/campaigns', icon: '📣', label: 'Campaigns', match: (p) => p.startsWith('/campaigns') },
-  { to: '/calls', icon: '📞', label: 'Calls', match: (p) => p.startsWith('/calls') },
-  { to: '/templates', icon: '📄', label: 'Templates', match: (p) => p.startsWith('/templates') },
-  { to: '/analytics', icon: '📊', label: 'Analytics', match: (p) => p.startsWith('/analytics') },
   { to: '/settings', icon: '⚙️', label: 'Settings', match: (p) => p.startsWith('/settings') },
 ]
 const AVAIL = ['Online', 'Away', 'Offline']
