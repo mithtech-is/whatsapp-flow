@@ -20,10 +20,10 @@ const STATUS_COLOR = {
 async function load() {
   loading.value = true
   const [o, v, s, c] = await Promise.allSettled([
-    call('whatsapp_desk.api.v1.analytics.overview'),
-    call('whatsapp_desk.api.v1.analytics.volume_series', { days: 7 }),
-    call('whatsapp_desk.api.v1.analytics.status_breakdown'),
-    call('whatsapp_desk.api.v1.analytics.campaign_results', { limit: 6 }),
+    call('whatsapp_flow.api.v1.analytics.overview'),
+    call('whatsapp_flow.api.v1.analytics.volume_series', { days: 7 }),
+    call('whatsapp_flow.api.v1.analytics.status_breakdown'),
+    call('whatsapp_flow.api.v1.analytics.campaign_results', { limit: 6 }),
   ])
   if (o.status === 'fulfilled') { cards.value = o.value.cards; io.value = o.value.io }
   if (v.status === 'fulfilled') series.value = v.value.series

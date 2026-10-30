@@ -1,117 +1,119 @@
-# Installing whatsapp_desk
+# Installing WhatsApp Flow
 
-`whatsapp_desk` is a **native-first add-on**, not a standalone app. It requires Frappe, ERPNext,
-and three upstream WhatsApp apps, and it *extends* them (it never forks or replaces them).
-
----
-
-## 1. Requirements
-
-| Requirement | Version / note |
-|-------------|----------------|
-| Frappe | **v15 or v16** (validated on v16.20) |
-| ERPNext | Required (the conversation model uses ERPNext **Issue + SLA**) |
-| Python | 3.10+ |
-| Node | Only needed if you rebuild the SPA — a prebuilt bundle ships in `whatsapp_desk/public/frontend` |
-| `frappe_whatsapp` | pin `08bc1f6af2e36022d7a5f77641c8ba2ef8c16aaa` (branch `master`) |
-| `whatsapp_chat` | pin `4ad3712528e9a56b536bccd190231663f04b8e7b` (branch `develop`) |
-| `frappe_whatsapp_chatbot` | pin `e98a655af42be5c0e8cc3912780418e2206d5bdb` (branch `master`) |
-
-The pins are enforced softly at runtime (`whatsapp_desk/compat/pinned.py`): our monkeypatches target
-specific upstream code, and each guard **skips with a safe fallback** if upstream has drifted — but
-installing the pinned commits is the supported path.
+WhatsApp Flow is an **add-on**. It needs three other WhatsApp apps installed first,
+then it adds the flow builder and desk on top. This guide walks through it step by step.
 
 ---
 
-## 2. Install order (fresh bench)
+## Before you start
+
+You need a working **Frappe + ERPNext** site (Frappe v15 or v16, Python 3.10+).
+
+You'll install **four apps in this order**:
+
+1. `frappe_whatsapp`
+2. `whatsapp_chat`
+3. `frappe_whatsapp_chatbot`
+4. `whatsapp_flow`  ← this app, last
+
+> **Tip:** Use the tested versions of the three WhatsApp apps (commit hashes in
+> [`whatsapp_flow/compat/pinned.py`](whatsapp_flow/compat/pinned.py)). Newer versions
+> *may* work — the app checks and falls back safely — but the pinned ones are proven.
+
+No Node.js needed: the app ships with its screens already built in.
+
+---
+
+## Step 1 — Get the apps
 
 ```bash
-# ERPNext (brings in Frappe)
-bench get-app erpnext --branch version-15     # or version-16
-
-# The three upstream WhatsApp apps (use your source URLs), then pin each commit
-bench get-app frappe_whatsapp <frappe_whatsapp-repo-url>
-bench get-app whatsapp_chat <whatsapp_chat-repo-url> --branch develop
-bench get-app frappe_whatsapp_chatbot <frappe_whatsapp_chatbot-repo-url>
-
-# (recommended) pin to the validated commits
-( cd apps/frappe_whatsapp        && git checkout 08bc1f6af2e36022d7a5f77641c8ba2ef8c16aaa )
-( cd apps/whatsapp_chat          && git checkout 4ad3712528e9a56b536bccd190231663f04b8e7b )
-( cd apps/frappe_whatsapp_chatbot && git checkout e98a655af42be5c0e8cc3912780418e2206d5bdb )
-
-# whatsapp_desk itself
-bench get-app whatsapp_desk <whatsapp_desk-repo-url>
-
-# Install onto your site (order matters: ERPNext + the 3 apps are installed by required_apps,
-# but installing them explicitly first is clearest)
-bench --site yoursite.localhost install-app erpnext
-bench --site yoursite.localhost install-app frappe_whatsapp whatsapp_chat frappe_whatsapp_chatbot
-bench --site yoursite.localhost install-app whatsapp_desk
-
-bench --site yoursite.localhost migrate
-bench --site yoursite.localhost clear-cache
-bench restart           # or restart your web + worker containers
+bench get-app frappe_whatsapp <url>
+bench get-app whatsapp_chat <url>
+bench get-app frappe_whatsapp_chatbot <url>
+bench get-app whatsapp_flow <url>
 ```
 
-`install-app whatsapp_desk` runs `after_install`, which creates: all `wd_*` custom fields, the
-WA Admin/Manager/Agent roles, the WhatsApp SLA (enabling ERPNext *Support Settings →
-track_service_level_agreement*), the analytics Number Cards / Dashboard Charts / Query Reports, and
-the **WhatsApp Desk** workspace. `migrate` creates the 6 add-on DocTypes.
-
----
-
-## 3. Post-install configuration
-
-### 3a. The bot/flow worker queue (REQUIRED for the chatbot)
-The async chatbot enqueues jobs to a dedicated **`wa_bot`** RQ queue. Your workers must listen on it
-or bot/flow jobs never run. Add `wa_bot` to a worker's queue list:
+## Step 2 — Install them on your site
 
 ```bash
-# bench (Procfile) dev:
-bench worker --queue wa_bot,long,default,short
-
-# production (supervisor / docker): add wa_bot to an existing worker's --queue list,
-# e.g.  --queue long,default,short,wa_bot
+bench --site yoursite install-app frappe_whatsapp whatsapp_chat frappe_whatsapp_chatbot
+bench --site yoursite install-app whatsapp_flow
+bench --site yoursite migrate
 ```
 
-### 3b. Connect WhatsApp Business
-In the app (**/whatsapp → Settings → Connection**) or in Desk (**WhatsApp Account**):
-- `Phone ID`, `Token`, `Business ID`, `App ID`
-- Set the **webhook** in Meta → WhatsApp → Configuration to the URL shown on the Settings screen:
-  `https://<your-domain>/api/method/frappe_whatsapp.utils.webhook.webhook`
-  (Meta requires a **public HTTPS** URL — localhost will not receive webhooks.)
-- Choose a **Webhook Verify Token** and enter the same value in Meta.
+That's it — the app sets up its fields, roles, SLA, analytics, and screens automatically.
 
-### 3c. Optional
-- **WhatsApp Flows (encrypted forms):** set `WhatsApp Settings → wd_flows_private_key` (PEM).
-- **Voice/calling:** `WhatsApp Settings → Enable Voice`. Real audio additionally needs Meta Calling
-  API access and a media bridge (VPS) — not required for call logs or IVR design.
+## Step 3 — Turn on the chatbot worker *(required for flows to run)*
+
+Flows run as background jobs on a queue called **`wa_bot`**. Your background worker
+must listen to it, or flows will never execute.
+
+- **Local/dev:** `bench worker --queue wa_bot,long,default,short`
+- **Production (supervisor/docker):** add `wa_bot` to a worker's `--queue` list,
+  e.g. `--queue long,default,short,wa_bot`, and restart it.
 
 ---
 
-## 4. Using it
-Open **`https://<your-domain>/whatsapp`** (login required; guests are redirected to `/login`).
-Nav: Inbox · Flows · Campaigns · Calls · Templates · Analytics · Settings.
+## Connect your WhatsApp number
+
+This is done in the **WhatsApp apps' settings in Frappe Desk** (not in WhatsApp Flow —
+the three apps own the connection). From Meta you'll need:
+
+| You need | Where to get it |
+|----------|-----------------|
+| Phone number ID + Access token | Meta → your app → **WhatsApp → API Setup** |
+| WhatsApp Business account ID + App ID | same page |
+| A **public HTTPS web address** | your server/domain (Meta can't reach `localhost`) |
+
+Then set the **webhook** in Meta → WhatsApp → Configuration to:
+
+```
+https://yoursite/api/method/frappe_whatsapp.utils.webhook.webhook
+```
+
+and use the same **Verify Token** on both sides.
 
 ---
 
-## 5. Rebuilding the SPA (only if you change the frontend)
-A prebuilt bundle ships in the repo, so this is **not** needed for a normal install.
+## Use it
+
+Open **`https://yoursite/whatsapp`** and log in.
+
+Screens: **Flows · Inbox · Campaigns · Calls · Templates · Analytics · Settings**.
+
+Start in **Flows** to draw a chatbot, use **Simulate** to test it, then **Publish**.
+
+---
+
+## Optional
+
+- **Encrypted WhatsApp Flows (forms):** add your private key in
+  *Settings → Retention & Ops → WhatsApp Flows private key*.
+- **Voice/calling:** turn on *Settings → Retention & Ops → Enable Voice*. Call logs and
+  IVR design work; **real phone audio** also needs Meta Calling API access + a media server.
+
+---
+
+## Going to production — quick checklist
+
+- [ ] The three WhatsApp apps installed **before** `whatsapp_flow`
+- [ ] `wa_bot` added to a worker queue (Step 3)
+- [ ] WhatsApp number connected + public HTTPS webhook verified
+- [ ] `bench --site yoursite migrate` ran with no errors
+- [ ] Don't disable CSRF — the app handles it correctly on its own
+- [ ] Remove any demo/sample data if you loaded it
+
+---
+
+## (Developers only) Rebuilding the screens
+
+Not needed for a normal install — the built screens ship in the repo. Only if you change
+the frontend:
 
 ```bash
-cd apps/whatsapp_desk/frontend
+cd apps/whatsapp_flow/frontend
 yarn install
-yarn build        # outputs to ../whatsapp_desk/public/frontend + www/whatsapp.html
+yarn build
 ```
-> Build on the **native OS of your node install** — a `node_modules` built on Windows won't run
-> under WSL/Linux (esbuild/rollup ship per-platform native binaries).
-
----
-
-## 6. Production checklist
-- [ ] Upstream apps pinned to the commits in §1
-- [ ] `wa_bot` added to a worker queue (§3a)
-- [ ] WhatsApp Account connected + public HTTPS webhook verified (§3b)
-- [ ] `bench --site <site> migrate` run clean
-- [ ] CSRF left **on** (do **not** set `ignore_csrf`; the app ships `www/whatsapp.py` which injects the token)
-- [ ] Remove any demo/seed data if you loaded it
+> Build on the **same OS** your Node runs on — a `node_modules` built on Windows won't
+> run on Linux/WSL (and vice-versa).

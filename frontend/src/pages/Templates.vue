@@ -31,13 +31,13 @@ function statusClass(s) {
 
 async function load() {
   loading.value = true
-  try { templates.value = await call('whatsapp_desk.api.v1.templates.list_templates') }
+  try { templates.value = await call('whatsapp_flow.api.v1.templates.list_templates') }
   finally { loading.value = false }
 }
 
 async function openNew() {
   err.value = ''
-  if (!opts.value.accounts.length) opts.value = await call('whatsapp_desk.api.v1.templates.accounts')
+  if (!opts.value.accounts.length) opts.value = await call('whatsapp_flow.api.v1.templates.accounts')
   form.value = {
     template_name: '', category: 'MARKETING', language_code: 'en',
     header_type: '', header: '', template: '', footer: '', sample_values: '',
@@ -52,7 +52,7 @@ async function saveTemplate() {
   }
   saving.value = true; err.value = ''
   try {
-    await call('whatsapp_desk.api.v1.templates.save_template', { payload: JSON.stringify(form.value) })
+    await call('whatsapp_flow.api.v1.templates.save_template', { payload: JSON.stringify(form.value) })
     showModal.value = false
     await load()
   } catch (e) { err.value = e.messages?.join(', ') || e.message || 'Failed to save.' }
@@ -61,7 +61,7 @@ async function saveTemplate() {
 
 async function removeTemplate(t) {
   if (!window.confirm(`Delete template "${t.template_name}"?`)) return
-  await call('whatsapp_desk.api.v1.templates.delete_template', { name: t.name })
+  await call('whatsapp_flow.api.v1.templates.delete_template', { name: t.name })
   await load()
 }
 onMounted(load)

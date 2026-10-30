@@ -53,7 +53,7 @@ function toGraph() {
   }
 }
 async function load() {
-  const r = await call('whatsapp_desk.api.v1.flows.get_graph', { flow })
+  const r = await call('whatsapp_flow.api.v1.flows.get_graph', { flow })
   toVueFlow(r.graph || { nodes: [], edges: [] })
 }
 
@@ -81,19 +81,19 @@ function addNode(payload) {
 }
 async function save() {
   saving.value = true
-  try { await call('whatsapp_desk.api.v1.flows.save_graph', { flow, graph: toGraph() }) }
+  try { await call('whatsapp_flow.api.v1.flows.save_graph', { flow, graph: toGraph() }) }
   finally { saving.value = false }
 }
 async function publish() {
   await save()
-  const r = await call('whatsapp_desk.api.v1.flows.publish', { flow })
+  const r = await call('whatsapp_flow.api.v1.flows.publish', { flow })
   errors.value = r.errors || []
   if (r.ok) window.alert('Published v' + r.version)
 }
 
 async function runSim() {
   if (!simInput.value.trim()) return
-  const r = await call('whatsapp_desk.api.v1.flows.simulate', { flow, inbound: simInput.value, session_state: simSession.value })
+  const r = await call('whatsapp_flow.api.v1.flows.simulate', { flow, inbound: simInput.value, session_state: simSession.value })
   simLog.value.push({ me: simInput.value, bot: r.outbound })
   simSession.value = r.session
   simInput.value = ''

@@ -9,13 +9,13 @@ const loading = ref(false)
 
 async function load() {
   loading.value = true
-  try { flows.value = await call('whatsapp_desk.api.v1.flows.list_flows') }
+  try { flows.value = await call('whatsapp_flow.api.v1.flows.list_flows') }
   finally { loading.value = false }
 }
 async function createFlow() {
   const name = window.prompt('New flow name')
   if (!name) return
-  const r = await call('whatsapp_desk.api.v1.flows.create_flow', { flow_name: name })
+  const r = await call('whatsapp_flow.api.v1.flows.create_flow', { flow_name: name })
   router.push(`/flows/${encodeURIComponent(r.flow)}`)
 }
 function open(f) { router.push(`/flows/${encodeURIComponent(f.name)}`) }

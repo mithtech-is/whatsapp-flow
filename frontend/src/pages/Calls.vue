@@ -34,7 +34,7 @@ function statusClass(s) {
 async function load() {
   loading.value = true
   try {
-    const r = await call('whatsapp_desk.api.v1.voice.calls_overview', { limit: 100 })
+    const r = await call('whatsapp_flow.api.v1.voice.calls_overview', { limit: 100 })
     voiceEnabled.value = r.voice_enabled
     cards.value = r.cards
     calls.value = r.calls

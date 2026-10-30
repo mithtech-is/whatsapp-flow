@@ -23,13 +23,13 @@ function initials(s) {
 }
 async function loadStatus() {
   try {
-    const s = await call('whatsapp_desk.api.v1.agents.my_status')
+    const s = await call('whatsapp_flow.api.v1.agents.my_status')
     availability.value = s.availability
   } catch (e) { /* ignore */ }
 }
 async function setAvailability(v) {
   availability.value = v
-  try { await call('whatsapp_desk.api.v1.agents.set_availability', { availability: v }) } catch (e) {}
+  try { await call('whatsapp_flow.api.v1.agents.set_availability', { availability: v }) } catch (e) {}
 }
 function isActive(item) {
   return item.match ? item.match(route.path) : false

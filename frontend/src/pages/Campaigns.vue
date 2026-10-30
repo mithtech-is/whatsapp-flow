@@ -22,7 +22,7 @@ async function loadTemplate(name) {
   if (!name) return
   tplLoading.value = true
   try {
-    const d = await call('whatsapp_desk.api.v1.templates.template_detail', { name })
+    const d = await call('whatsapp_flow.api.v1.templates.template_detail', { name })
     tpl.value = d
     for (const v of d.variables) varValues.value[v] = ''
   } catch (e) { tpl.value = null }
@@ -43,13 +43,13 @@ const preview = computed(() => {
 
 async function load() {
   loading.value = true
-  try { campaigns.value = await call('whatsapp_desk.api.v1.campaigns.list_campaigns') }
+  try { campaigns.value = await call('whatsapp_flow.api.v1.campaigns.list_campaigns') }
   finally { loading.value = false }
 }
 
 async function openNew() {
   err.value = ''; segPreview.value = null
-  opts.value = await call('whatsapp_desk.api.v1.campaigns.new_campaign_options')
+  opts.value = await call('whatsapp_flow.api.v1.campaigns.new_campaign_options')
   form.value = {
     title: '', template: opts.value.templates[0]?.name || '',
     whatsapp_account: opts.value.accounts[0]?.name || '',
@@ -65,7 +65,7 @@ watch(() => form.value?.template, (name) => { if (showModal.value) loadTemplate(
 async function previewSegment() {
   if (!form.value.wd_segment) return
   try {
-    const r = await call('whatsapp_desk.api.v1.campaigns.preview_segment', { segment: form.value.wd_segment })
+    const r = await call('whatsapp_flow.api.v1.campaigns.preview_segment', { segment: form.value.wd_segment })
     segPreview.value = r.count
   } catch (e) { segPreview.value = null }
 }
@@ -93,7 +93,7 @@ async function createCampaign() {
     scheduled_time: form.value.scheduled_time || '',
   }
   try {
-    await call('whatsapp_desk.api.v1.campaigns.create_campaign', { payload: JSON.stringify(payload) })
+    await call('whatsapp_flow.api.v1.campaigns.create_campaign', { payload: JSON.stringify(payload) })
     showModal.value = false
     await load()
   } catch (e) { err.value = e.messages?.join(', ') || e.message || 'Failed to create.' }
@@ -103,7 +103,7 @@ async function createCampaign() {
 async function act(c, action) {
   const fn = { pause: 'pause_campaign', resume: 'resume_campaign', cancel: 'cancel_campaign' }[action]
   if (action === 'cancel' && !window.confirm(`Cancel "${c.title}"?`)) return
-  await call(`whatsapp_desk.api.v1.campaigns.${fn}`, { name: c.name })
+  await call(`whatsapp_flow.api.v1.campaigns.${fn}`, { name: c.name })
   await load()
 }
 function pct(c) {

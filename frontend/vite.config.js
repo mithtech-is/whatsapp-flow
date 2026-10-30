@@ -10,9 +10,9 @@ export default defineConfig({
     frappeui({
       frontendRoute: '/whatsapp',
       buildConfig: {
-        outDir: '../whatsapp_desk/public/frontend',
-        indexHtmlPath: '../whatsapp_desk/www/whatsapp.html',
-        baseUrl: '/assets/whatsapp_desk/frontend/',
+        outDir: '../whatsapp_flow/public/frontend',
+        indexHtmlPath: '../whatsapp_flow/www/whatsapp.html',
+        baseUrl: '/assets/whatsapp_flow/frontend/',
       },
     }),
     vue(),

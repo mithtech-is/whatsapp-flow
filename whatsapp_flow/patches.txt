@@ -1,0 +1,5 @@
+[pre_model_sync]
+
+[post_model_sync]
+whatsapp_flow.patches.v0_0_1.add_indexes
+whatsapp_flow.patches.v0_0_1.backfill_issues

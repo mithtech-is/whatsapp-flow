@@ -38,10 +38,10 @@ jobs:
       FRAPPE_BRANCH: version-15
 
     steps:
-      - name: Checkout whatsapp_desk
+      - name: Checkout whatsapp_flow
         uses: actions/checkout@v4
         with:
-          path: whatsapp_desk
+          path: whatsapp_flow
 
       - uses: actions/setup-python@v5
         with:
@@ -82,10 +82,10 @@ jobs:
           get whatsapp_chat https://github.com/shridarpatil/whatsapp_chat
           get frappe_whatsapp_chatbot https://github.com/shridarpatil/frappe_whatsapp_chatbot
 
-      - name: Link whatsapp_desk into the bench
+      - name: Link whatsapp_flow into the bench
         working-directory: frappe-bench
         run: |
-          bench get-app whatsapp_desk "$GITHUB_WORKSPACE/whatsapp_desk"
+          bench get-app whatsapp_flow "$GITHUB_WORKSPACE/whatsapp_flow"
 
       - name: Create site + install apps (in order)
         working-directory: frappe-bench
@@ -99,10 +99,10 @@ jobs:
           bench --site test.localhost install-app frappe_whatsapp
           bench --site test.localhost install-app whatsapp_chat
           bench --site test.localhost install-app frappe_whatsapp_chatbot
-          bench --site test.localhost install-app whatsapp_desk
+          bench --site test.localhost install-app whatsapp_flow
 
       - name: Run tests
         working-directory: frappe-bench
         run: |
           bench --site test.localhost set-config allow_tests true
-          bench --site test.localhost run-tests --app whatsapp_desk
+          bench --site test.localhost run-tests --app whatsapp_flow

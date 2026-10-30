@@ -68,13 +68,13 @@ function dayOf(dt) {
 }
 
 async function loadMyStatus() {
-  try { const s = await call('whatsapp_desk.api.v1.agents.my_status'); isManager.value = s.is_manager } catch (e) {}
+  try { const s = await call('whatsapp_flow.api.v1.agents.my_status'); isManager.value = s.is_manager } catch (e) {}
 }
 async function loadConversations() {
   loadingList.value = true
   try {
     const listStatus = filter.value === 'Mine' || filter.value === 'Unread' ? 'All' : filter.value
-    conversations.value = await call('whatsapp_desk.api.v1.inbox.list_conversations', { status: listStatus, search: search.value || null })
+    conversations.value = await call('whatsapp_flow.api.v1.inbox.list_conversations', { status: listStatus, search: search.value || null })
   } finally { loadingList.value = false }
 }
 async function select(row) {
@@ -83,46 +83,46 @@ async function select(row) {
   loadingThread.value = true
   try {
     const [msgs, c, ns] = await Promise.all([
-      call('whatsapp_desk.api.v1.inbox.get_messages', { contact: row.contact }),
-      call('whatsapp_desk.api.v1.inbox.get_contact', { contact: row.contact }),
-      call('whatsapp_desk.api.v1.tools.list_notes', { contact: row.contact }),
+      call('whatsapp_flow.api.v1.inbox.get_messages', { contact: row.contact }),
+      call('whatsapp_flow.api.v1.inbox.get_contact', { contact: row.contact }),
+      call('whatsapp_flow.api.v1.tools.list_notes', { contact: row.contact }),
     ])
     messages.value = msgs; contact.value = c; notes.value = ns
     loadActions()
-    if (row.unread) { call('whatsapp_desk.endpoints.chat.mark_as_read', { room: row.contact }).catch(() => {}); row.unread = 0 }
+    if (row.unread) { call('whatsapp_flow.endpoints.chat.mark_as_read', { room: row.contact }).catch(() => {}); row.unread = 0 }
     scrollThread()
   } finally { loadingThread.value = false }
 }
 function scrollThread() { nextTick(() => { if (threadEl.value) threadEl.value.scrollTop = threadEl.value.scrollHeight }) }
 async function refreshThread() {
   if (!active.value) return
-  messages.value = await call('whatsapp_desk.api.v1.inbox.get_messages', { contact: active.value.contact })
+  messages.value = await call('whatsapp_flow.api.v1.inbox.get_messages', { contact: active.value.contact })
   scrollThread()
 }
 async function send() {
   const content = draft.value.trim()
   if (!content || !active.value || sending.value) return
   sending.value = true
-  try { await call('whatsapp_desk.api.v1.inbox.send_message', { contact: active.value.contact, content }); draft.value = ''; await refreshThread() }
+  try { await call('whatsapp_flow.api.v1.inbox.send_message', { contact: active.value.contact, content }); draft.value = ''; await refreshThread() }
   catch (e) { window.alert(e?.messages?.join('\n') || e?.message || 'Failed to send') }
   finally { sending.value = false }
 }
 
-async function assignToMe() { await call('whatsapp_desk.api.v1.agents.assign_conversation', { contact: active.value.contact }); await select(active.value); loadConversations() }
+async function assignToMe() { await call('whatsapp_flow.api.v1.agents.assign_conversation', { contact: active.value.contact }); await select(active.value); loadConversations() }
 async function openReassign() {
   reassignOpen.value = !reassignOpen.value
-  if (reassignOpen.value && contact.value?.team) teamAgents.value = await call('whatsapp_desk.api.v1.agents.team_agents', { team: contact.value.team })
+  if (reassignOpen.value && contact.value?.team) teamAgents.value = await call('whatsapp_flow.api.v1.agents.team_agents', { team: contact.value.team })
 }
-async function reassign(agent) { await call('whatsapp_desk.api.v1.agents.assign_conversation', { contact: active.value.contact, agent }); reassignOpen.value = false; await select(active.value); loadConversations() }
-async function resolve() { await call('whatsapp_desk.api.v1.agents.resolve_conversation', { contact: active.value.contact }); await select(active.value); loadConversations() }
+async function reassign(agent) { await call('whatsapp_flow.api.v1.agents.assign_conversation', { contact: active.value.contact, agent }); reassignOpen.value = false; await select(active.value); loadConversations() }
+async function resolve() { await call('whatsapp_flow.api.v1.agents.resolve_conversation', { contact: active.value.contact }); await select(active.value); loadConversations() }
 
-async function toggleCanned() { cannedOpen.value = !cannedOpen.value; templatesOpen.value = false; if (cannedOpen.value && !canned.value.length) canned.value = await call('whatsapp_desk.api.v1.tools.list_canned', { team: contact.value?.team || null }) }
-async function applyCanned(sc) { const r = await call('whatsapp_desk.api.v1.tools.render_canned', { contact: active.value.contact, shortcut: sc }); draft.value = draft.value ? draft.value + '\n' + r.message : r.message; cannedOpen.value = false }
-async function toggleTemplates() { templatesOpen.value = !templatesOpen.value; cannedOpen.value = false; if (templatesOpen.value && !templates.value.length) templates.value = await call('whatsapp_desk.api.v1.inbox.list_templates') }
+async function toggleCanned() { cannedOpen.value = !cannedOpen.value; templatesOpen.value = false; if (cannedOpen.value && !canned.value.length) canned.value = await call('whatsapp_flow.api.v1.tools.list_canned', { team: contact.value?.team || null }) }
+async function applyCanned(sc) { const r = await call('whatsapp_flow.api.v1.tools.render_canned', { contact: active.value.contact, shortcut: sc }); draft.value = draft.value ? draft.value + '\n' + r.message : r.message; cannedOpen.value = false }
+async function toggleTemplates() { templatesOpen.value = !templatesOpen.value; cannedOpen.value = false; if (templatesOpen.value && !templates.value.length) templates.value = await call('whatsapp_flow.api.v1.inbox.list_templates') }
 async function sendTemplate(tpl) {
   templatesOpen.value = false
   let detail = null
-  try { detail = await call('whatsapp_desk.api.v1.templates.template_detail', { name: tpl.name }) } catch (e) { /* fall back to paramless */ }
+  try { detail = await call('whatsapp_flow.api.v1.templates.template_detail', { name: tpl.name }) } catch (e) { /* fall back to paramless */ }
   if (detail && detail.variables.length) {
     const values = {}; detail.variables.forEach((v) => (values[v] = ''))
     tplParam.value = { tpl, detail, values }
@@ -131,7 +131,7 @@ async function sendTemplate(tpl) {
   await doSendTemplate(tpl.name, null)
 }
 async function doSendTemplate(name, body_param) {
-  try { await call('whatsapp_desk.api.v1.inbox.send_message', { contact: active.value.contact, template: name, body_param }); await refreshThread() }
+  try { await call('whatsapp_flow.api.v1.inbox.send_message', { contact: active.value.contact, template: name, body_param }); await refreshThread() }
   catch (e) { window.alert(e?.message || 'Failed') }
 }
 async function confirmTemplate() {
@@ -152,16 +152,16 @@ const tplParamPreview = computed(() => {
   return body
 })
 
-async function loadActions() { actions.value = await call('whatsapp_desk.api.v1.actions.list_actions', { team: contact.value?.team || null }) }
-async function runAction(a) { try { const res = await call('whatsapp_desk.api.v1.actions.execute_action', { action: a.name, contact: active.value.contact }); if (res?.type === 'URL' && res.url) window.open(res.url, res.new_tab ? '_blank' : '_self'); else window.alert('Action sent.') } catch (e) { window.alert(e?.message || 'Action failed') } }
+async function loadActions() { actions.value = await call('whatsapp_flow.api.v1.actions.list_actions', { team: contact.value?.team || null }) }
+async function runAction(a) { try { const res = await call('whatsapp_flow.api.v1.actions.execute_action', { action: a.name, contact: active.value.contact }); if (res?.type === 'URL' && res.url) window.open(res.url, res.new_tab ? '_blank' : '_self'); else window.alert('Action sent.') } catch (e) { window.alert(e?.message || 'Action failed') } }
 
-async function addNote() { const content = newNote.value.trim(); if (!content) return; await call('whatsapp_desk.api.v1.tools.add_note', { contact: active.value.contact, content }); newNote.value = ''; notes.value = await call('whatsapp_desk.api.v1.tools.list_notes', { contact: active.value.contact }) }
-async function addTag() { const tag = tagInput.value.trim(); if (!tag) return; await call('whatsapp_desk.api.v1.tools.add_tag', { contact: active.value.contact, tag }); tagInput.value = ''; contact.value.tags = await call('whatsapp_desk.api.v1.tools.list_tags', { contact: active.value.contact }) }
-async function removeTag(tag) { await call('whatsapp_desk.api.v1.tools.remove_tag', { contact: active.value.contact, tag }); contact.value.tags = await call('whatsapp_desk.api.v1.tools.list_tags', { contact: active.value.contact }) }
+async function addNote() { const content = newNote.value.trim(); if (!content) return; await call('whatsapp_flow.api.v1.tools.add_note', { contact: active.value.contact, content }); newNote.value = ''; notes.value = await call('whatsapp_flow.api.v1.tools.list_notes', { contact: active.value.contact }) }
+async function addTag() { const tag = tagInput.value.trim(); if (!tag) return; await call('whatsapp_flow.api.v1.tools.add_tag', { contact: active.value.contact, tag }); tagInput.value = ''; contact.value.tags = await call('whatsapp_flow.api.v1.tools.list_tags', { contact: active.value.contact }) }
+async function removeTag(tag) { await call('whatsapp_flow.api.v1.tools.remove_tag', { contact: active.value.contact, tag }); contact.value.tags = await call('whatsapp_flow.api.v1.tools.list_tags', { contact: active.value.contact }) }
 
 function onRealtime(p) { loadConversations(); if (active.value && p?.contact === active.value.contact) refreshThread() }
 function startRealtime() {
-  try { socket = io({ path: '/socket.io', withCredentials: true }); socket.on('whatsapp_desk:update', onRealtime) } catch (e) { socket = null }
+  try { socket = io({ path: '/socket.io', withCredentials: true }); socket.on('whatsapp_flow:update', onRealtime) } catch (e) { socket = null }
   listTimer = setInterval(loadConversations, 12000)
   threadTimer = setInterval(() => active.value && refreshThread(), 6000)
 }

@@ -1,6 +1,6 @@
-# whatsapp_desk — Visual Flow Builder Spec
+# whatsapp_flow — Visual Flow Builder Spec
 
-*Addendum to the whatsapp_desk plan (expands the one-line "Graph mode + Vue builder + runner" of Phase 3).*
+*Addendum to the whatsapp_flow plan (expands the one-line "Graph mode + Vue builder + runner" of Phase 3).*
 *Native-first: no new DocTypes for the builder. The graph is stored on the **existing** `WhatsApp Chatbot Flow` DocType; execution reuses the **existing** `WhatsApp Chatbot Session`.*
 
 ---
@@ -8,7 +8,7 @@
 ## 0. References (studied, not copied)
 
 - **Vue Flow** `@vue-flow/core@1.48.2` (+ `@vue-flow/background`, `@vue-flow/controls`, `@vue-flow/minimap`). Requires Vue 3.3+, Node 20+.
-- **Whatomate** (`shridarpatil/whatomate`, **AGPL-3.0**, standalone Go + Vue 3) — the visual-builder *feature reference*. Its chatbot builder is built on the same Vue Flow stack. **Reference only; do not copy its `.vue` source** (AGPL network-copyleft would attach to whatsapp_desk). We reimplement in our own frappe-ui SPA.
+- **Whatomate** (`shridarpatil/whatomate`, **AGPL-3.0**, standalone Go + Vue 3) — the visual-builder *feature reference*. Its chatbot builder is built on the same Vue Flow stack. **Reference only; do not copy its `.vue` source** (AGPL network-copyleft would attach to whatsapp_flow). We reimplement in our own frappe-ui SPA.
 - **Frappe CRM** (`frappe/crm`) — first-party proof that `frappe-ui@1.0.0-rc.2` + `@vue-flow/core@1.48.2` build and run together inside a Frappe app. Used as the integration pattern.
 
 ---
@@ -16,8 +16,8 @@
 ## 1. Where it lives
 
 - A route in the single `/whatsapp` SPA: `/whatsapp/flows` (list) and `/whatsapp/flows/:flow_name` (builder).
-- Served by Frappe: `vite build --base=/assets/whatsapp_desk/frontend/` → `copy-html-entry` → `whatsapp_desk/www/whatsapp.html`; `website_route_rules` in `hooks.py` maps `/whatsapp/<path>` to it for client-side routing.
-- Loads/saves via frappe-ui `createDocumentResource('WhatsApp Chatbot Flow', name)` reading/writing `wd_graph_json`; publish/validate via `createResource({ url: 'whatsapp_desk.api.v1.flows.*' })`.
+- Served by Frappe: `vite build --base=/assets/whatsapp_flow/frontend/` → `copy-html-entry` → `whatsapp_flow/www/whatsapp.html`; `website_route_rules` in `hooks.py` maps `/whatsapp/<path>` to it for client-side routing.
+- Loads/saves via frappe-ui `createDocumentResource('WhatsApp Chatbot Flow', name)` reading/writing `wd_graph_json`; publish/validate via `createResource({ url: 'whatsapp_flow.api.v1.flows.*' })`.
 
 ---
 
@@ -90,7 +90,7 @@ No new DocType is introduced for the builder. IVR (voice phase) reuses the same 
 
 ## 5. Node catalog
 
-### 5.1 Chatbot nodes (parity with Whatomate + whatsapp_desk additions)
+### 5.1 Chatbot nodes (parity with Whatomate + whatsapp_flow additions)
 
 | `type` | Node | `data` (key fields) | Handles (source) | Notes |
 |---|---|---|---|---|
@@ -112,7 +112,7 @@ No new DocType is introduced for the builder. IVR (voice phase) reuses the same 
 
 ### 5.2 Node→backend mapping (how the runner handles each)
 
-Each `type` maps to a handler in `whatsapp_desk/wa_bot/nodes/<type>.py` exposing `run(node, session, ctx) -> NextDirective`. `NextDirective` is one of: `goto(node_id)`, `branch(handle)`, `wait_for_input(node_id)`, `end`. This keeps the graph walk (§7) node-agnostic.
+Each `type` maps to a handler in `whatsapp_flow/wa_bot/nodes/<type>.py` exposing `run(node, session, ctx) -> NextDirective`. `NextDirective` is one of: `goto(node_id)`, `branch(handle)`, `wait_for_input(node_id)`, `end`. This keeps the graph walk (§7) node-agnostic.
 
 ### 5.3 IVR nodes (voice phase — same graph machinery, `wd_mode=Graph` on an IVR flow)
 
@@ -122,7 +122,7 @@ Parity set from Whatomate's `calling/nodes/`: `greeting`, `gather`, `menu`, `tim
 
 ## 6. Validation & publish
 
-On **Publish**, `whatsapp_desk.api.v1.flows.publish(name)` validates the draft `wd_graph_json`:
+On **Publish**, `whatsapp_flow.api.v1.flows.publish(name)` validates the draft `wd_graph_json`:
 
 1. Exactly one `start` node.
 2. Every node (except `end`, `goto`) has at least one outgoing edge; every declared source handle (each button, `true`/`false`, `success`/`error`) is connected or explicitly defaulted.
@@ -136,7 +136,7 @@ On success: copy draft → `wd_published_json`, bump `wd_version`, set `wd_publi
 
 ## 7. Runner execution model (server-side)
 
-Lives in `whatsapp_desk/wa_bot/graph_runner.py`. Entry via the chatbot processor patch (`§2.2` of the plan): the dispatch to the graph runner happens when `wd_mode = Graph`.
+Lives in `whatsapp_flow/wa_bot/graph_runner.py`. Entry via the chatbot processor patch (`§2.2` of the plan): the dispatch to the graph runner happens when `wd_mode = Graph`.
 
 ```
 on inbound message routed to a Graph flow:
@@ -170,7 +170,7 @@ Whatomate ships a `flow-preview/` simulator the plan didn't call out — worth m
 - **ExecutionTimeline / DebugPanel** — shows the node path taken, variables set, and branch chosen at each step.
 - **ApiMockDialog** — mock `api_call`/`erp` responses so flows can be tested without live side effects.
 
-Implementation: a `whatsapp_desk.api.v1.flows.simulate(name, draft, inbound, session_state)` endpoint that runs the **same handlers** as §7 in a dry-run mode (no real sends, side effects mocked), returning the step trace. Reuses the runner — no second engine.
+Implementation: a `whatsapp_flow.api.v1.flows.simulate(name, draft, inbound, session_state)` endpoint that runs the **same handlers** as §7 in a dry-run mode (no real sends, side effects mocked), returning the step trace. Reuses the runner — no second engine.
 
 ---
 
@@ -184,7 +184,7 @@ Implementation: a `whatsapp_desk.api.v1.flows.simulate(name, draft, inbound, ses
 
 ## 10. Build/serve checklist (from the Frappe CRM pattern)
 
-- `frappe-ui/vite` plugin in `vite.config.js`; `base=/assets/whatsapp_desk/frontend/`.
+- `frappe-ui/vite` plugin in `vite.config.js`; `base=/assets/whatsapp_flow/frontend/`.
 - `setConfig('resourceFetcher', frappeRequest)` in `main.js`; `resourcesPlugin` if any Options-API components.
 - Dev: `bench set-config ignore_csrf 1`; Vite proxy auto-detects the bench port.
 - `markRaw` every custom node in `nodeTypes`; import `@vue-flow/core/dist/style.css`.

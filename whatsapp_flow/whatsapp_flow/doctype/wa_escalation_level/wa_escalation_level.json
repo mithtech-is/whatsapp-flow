@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2026-01-01 00:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "level",
+  "basis",
+  "minutes_after_due",
+  "action",
+  "escalate_to"
+ ],
+ "fields": [
+  {
+   "fieldname": "level",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Level",
+   "reqd": 1
+  },
+  {
+   "default": "Response",
+   "fieldname": "basis",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Basis",
+   "options": "Response\nResolution"
+  },
+  {
+   "fieldname": "minutes_after_due",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Minutes After Due",
+   "description": "Escalate this many minutes after the SLA response/resolution time is breached."
+  },
+  {
+   "default": "Notify Manager",
+   "fieldname": "action",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Action",
+   "options": "Notify Assignee\nNotify Manager\nReassign"
+  },
+  {
+   "depends_on": "eval:doc.action=='Reassign'",
+   "fieldname": "escalate_to",
+   "fieldtype": "Link",
+   "label": "Escalate To (User)",
+   "options": "User"
+  }
+ ],
+ "istable": 1,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-01-01 00:00:00",
+ "modified_by": "Administrator",
+ "module": "WhatsApp Flow",
+ "name": "WA Escalation Level",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

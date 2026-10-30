@@ -1,45 +1,79 @@
-# whatsapp_desk
+# WhatsApp Flow
 
-A **native-first** Frappe add-on that turns the three upstream WhatsApp apps into a full agent
-desk: scoped inbox, teams & assignment, SLA, campaigns, a visual chatbot **flow builder**,
-analytics, platform tooling and (later) voice.
+**Build WhatsApp chatbots by drawing them — no coding.**
 
-> **Add-on, not a fork.** `whatsapp_desk` requires and *extends* three existing apps —
-> `frappe_whatsapp`, `whatsapp_chat`, `frappe_whatsapp_chatbot` — plus Frappe & ERPNext core.
-> Nothing is replaced or migrated. Whatomate is a **feature reference only** (AGPL-3.0; its code
-> is never copied).
+WhatsApp Flow adds a visual, drag‑and‑drop builder to your Frappe/ERPNext site so
+you can design what your WhatsApp number says and does automatically. You draw a
+flowchart — "if the customer says X, reply Y, then ask Z" — and it runs live.
 
-See [`whatsapp_desk-plan.md`](whatsapp_desk-plan.md) for the architecture & roadmap and
-[`flow-builder-spec.md`](flow-builder-spec.md) for the visual flow builder.
+---
 
-## Native-first
+## What you can do
 
-Wherever Frappe/ERPNext or the three apps already provide something, `whatsapp_desk` reuses it
-instead of adding a DocType:
+- 🧩 **Draw chatbot flows** on a canvas: welcome messages, questions, buttons,
+  conditions, call an API, hand off to a human — all as connected boxes.
+- ▶️ **Test before you go live** with the built‑in simulator.
+- 💬 **Agent inbox** — staff reply to real customer chats, with assignment,
+  canned replies, notes, and tags.
+- ⏱️ **Response targets (SLA)** — track how fast conversations get answered.
+- 📣 **Campaigns & templates** — send approved template messages to lists of people.
+- 📊 **Analytics** — see message volume, open chats, and campaign results.
+- 📞 **Call logs & voice menus (IVR)** — built from the same flow canvas.
 
-| Concept | Backed by |
-|---|---|
-| Conversation / support episode | ERPNext **Issue** (native SLA) |
-| Teams | Frappe **User Group** |
-| Agent presence | Custom fields on **User** |
-| Settings | existing **WhatsApp Settings** Single |
-| Call records | **Call Log** |
+---
 
-## Install order
+## How it fits in
 
-1. `frappe_whatsapp`
-2. `whatsapp_chat`
-3. `frappe_whatsapp_chatbot`
-4. `whatsapp_desk`
+WhatsApp Flow is an **add‑on**. It sits on top of three existing WhatsApp apps and
+makes them easier to use — it doesn't replace them:
+
+```
+          WhatsApp Flow   ← the visual flow builder + desk (this app)
+                │
+  frappe_whatsapp · whatsapp_chat · frappe_whatsapp_chatbot   ← send/receive, templates, chat
+                │
+            Frappe / ERPNext   ← the platform underneath
+```
+
+Those three apps handle **connecting your WhatsApp number and sending messages**.
+WhatsApp Flow adds the **visual builder and the agent tools** around them.
+
+---
+
+## Install
+
+Install the three WhatsApp apps first, then this one:
 
 ```bash
 bench get-app frappe_whatsapp
 bench get-app whatsapp_chat
 bench get-app frappe_whatsapp_chatbot
-bench get-app whatsapp_desk /path/to/whatsapp_desk
-bench --site <site> install-app whatsapp_desk
+bench get-app whatsapp_flow <repo-url>
+
+bench --site yoursite install-app whatsapp_flow
+bench --site yoursite migrate
 ```
+
+Then open **`https://yoursite/whatsapp`** and log in.
+
+> Full step‑by‑step setup (connecting your WhatsApp number, the chatbot worker
+> queue, etc.) is in **[INSTALL.md](INSTALL.md)**.
+
+---
+
+## What you need to actually send messages
+
+The builder, simulator, and desk work right away. To send/receive **real** WhatsApp
+messages you also need, from Meta:
+
+- a **WhatsApp Business account** + phone number,
+- an **access token** and **phone number ID**, and
+- a **public web address (HTTPS)** so Meta can deliver incoming messages.
+
+You enter these in the WhatsApp apps' settings (Frappe Desk).
+
+---
 
 ## License
 
-MIT (see `license.txt`).
+MIT — see [`license.txt`](license.txt). *(Whatomate is only a design reference; none of its code is used.)*

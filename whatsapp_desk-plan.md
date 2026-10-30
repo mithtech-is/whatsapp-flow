@@ -1,4 +1,4 @@
-# whatsapp_desk: Architecture & Phased Roadmap (v3.1: native-first)
+# whatsapp_flow: Architecture & Phased Roadmap (v3.1: native-first)
 
 *Plan only, no code yet. Revised 2026-10-14.*
 
@@ -9,21 +9,21 @@
 > - The visual **flow builder** is specified separately in `flow-builder-spec.md`.
 *Feature numbers (#1–#69) refer to the gap list in [whatsapp-frappe-apps-analysis.md §9](whatsapp-frappe-apps-analysis.md).*
 
-> **Decision (v3):** `whatsapp_desk` is an **add-on** that **requires all three existing apps**:
+> **Decision (v3):** `whatsapp_flow` is an **add-on** that **requires all three existing apps**:
 > - `frappe_whatsapp`
 > - `whatsapp_chat`
 > - `frappe_whatsapp_chatbot`
 >
 > It also reuses Frappe and ERPNext core DocTypes. **Whatomate is only a feature reference**; no Whatomate code or dependency is used.
 >
-> `whatsapp_desk` **extends** the three apps and adds only what none of them (or Frappe/ERPNext) provides. Nothing is replaced or migrated.
+> `whatsapp_flow` **extends** the three apps and adds only what none of them (or Frappe/ERPNext) provides. Nothing is replaced or migrated.
 
 ---
 
 ## 1. Dependencies
 
 ```python
-# whatsapp_desk/hooks.py
+# whatsapp_flow/hooks.py
 required_apps = [
     "frappe",
     "erpnext",
@@ -37,12 +37,12 @@ required_apps = [
 1. `frappe_whatsapp`
 2. `whatsapp_chat`
 3. `frappe_whatsapp_chatbot`
-4. `whatsapp_desk`
+4. `whatsapp_flow`
 
 Our `doc_events` run after theirs on WhatsApp Message.
 
 **Version pinning:**
-- Record a tested commit for each of the three apps in `whatsapp_desk/compat.py` and in the README.
+- Record a tested commit for each of the three apps in `whatsapp_flow/compat.py` and in the README.
 - CI runs against the pinned commits **and** nightly against each app's `develop` branch, so upstream breakage is caught early.
 
 ### 1.1 ⚠️ License check: required before any commercial use
@@ -52,9 +52,9 @@ Our `doc_events` run after theirs on WhatsApp Message.
 | whatsapp_chat | MIT ("unlicense" in hooks) | No restriction |
 | **frappe_whatsapp_chatbot** | **MIT + Commons Clause** | Commons Clause forbids "selling" the software. That explicitly includes **charging for hosting, consulting or support services whose value derives substantially from it**. A paid implementation or SaaS that relies on the chatbot app may fall inside this. |
 
-**Action:** before selling `whatsapp_desk`, or charging clients for chatbot-based work, get **written permission or a commercial license from the chatbot app's author** (Shridhar Patil), or take legal advice.
+**Action:** before selling `whatsapp_flow`, or charging clients for chatbot-based work, get **written permission or a commercial license from the chatbot app's author** (Shridhar Patil), or take legal advice.
 
-`whatsapp_desk` itself must not copy chatbot code. It only calls and extends it.
+`whatsapp_flow` itself must not copy chatbot code. It only calls and extends it.
 
 ---
 
@@ -62,11 +62,11 @@ Our `doc_events` run after theirs on WhatsApp Message.
 
 | Mechanism | Used for |
 |---|---|
-| **Custom Field / Property Setter** (fixtures, module `WhatsApp Desk`) | New fields and Select options on the three apps' DocTypes and on core DocTypes; `track_changes`; indexes |
+| **Custom Field / Property Setter** (fixtures, module `WhatsApp Flow`) | New fields and Select options on the three apps' DocTypes and on core DocTypes; `track_changes`; indexes |
 | **`override_doctype_class`** (or `extend_doctype_class` where supported) | WhatsApp Message (send guard), WhatsApp Templates (VIDEO / named params / draft), Bulk WhatsApp Message (pause, opt-out, throttle) |
 | **`override_whitelisted_methods`** | Replace **insecure or missing endpoints** in the three apps with secured versions (§2.1). This works even for methods that don't exist, such as `set_typing`. |
 | **`doc_events`** | Conversation linking, routing, SLA, assignment sync |
-| **Runtime patch layer** (`whatsapp_desk/compat/patches.py`, imported from `hooks.py`) | A few targeted monkeypatches on the **chatbot engine**, which is plain Python classes, not DocTypes (§2.2). Each one is version-checked and tested. |
+| **Runtime patch layer** (`whatsapp_flow/compat/patches.py`, imported from `hooks.py`) | A few targeted monkeypatches on the **chatbot engine**, which is plain Python classes, not DocTypes (§2.2). Each one is version-checked and tested. |
 | **`permission_query_conditions` / `has_permission`** | Scoped inbox on WhatsApp Contact, **Issue** and WhatsApp Message |
 | **Roles + Custom DocPerm** (fixtures) | WA Admin / WA Manager / WA Agent across all three apps' DocTypes |
 | **Patches** | Indexes on their tables, back-fill of **Issue** (conversations) |
@@ -154,7 +154,7 @@ Our `doc_events` run after theirs on WhatsApp Message.
 | **Notification Log** | Agent alerts (assignment, SLA risk, escalation) |
 | **Data Import / Export** | #43 contact CSV, #47 campaign CSV |
 
-### 3.5 New DocTypes in whatsapp_desk
+### 3.5 New DocTypes in whatsapp_flow
 
 **Native-first directive:** use native Frappe/ERPNext DocTypes and modules wherever possible. The original 15 proposed new DocTypes reduce to a small genuinely-new set below; the rest map onto native or existing-app DocTypes.
 
@@ -215,7 +215,7 @@ Our `doc_events` run after theirs on WhatsApp Message.
 | #64 Webhook signature | Endpoint override (§2.1) |
 | #65 Secrets | Password fields |
 | #66 Outbound webhooks | **Webhook** + SSRF hook |
-| #67 API | Frappe REST + `whatsapp_desk.api.v1` + User API keys |
+| #67 API | Frappe REST + `whatsapp_flow.api.v1` + User API keys |
 | #68 i18n | **Translation** |
 | #69 Catalog | **ERPNext Item** sync |
 
@@ -230,7 +230,7 @@ worker → frappe_whatsapp parser creates WhatsApp Message
   after_insert hooks (in app install order):
    1. whatsapp_chat.last_message        → creates/updates WhatsApp Contact (their code)
    2. frappe_whatsapp_chatbot processor → (patched) enqueued to wa_bot queue
-   3. whatsapp_desk.on_message          → find/open Issue, set WhatsApp Contact.wd_open_issue,
+   3. whatsapp_flow.on_message          → find/open Issue, set WhatsApp Contact.wd_open_issue,
                                           update window/unread/opt-out (STOP),
                                           if bot inactive → assignment, publish to team rooms
 wa_bot worker → their processor (patched):
@@ -266,8 +266,8 @@ Same approach as before:
 
 ## 7. App structure
 ```
-whatsapp_desk/
-├── whatsapp_desk/
+whatsapp_flow/
+├── whatsapp_flow/
 │   ├── hooks.py              # required_apps (all 3), overrides, doc_events, permissions, scheduler, fixtures
 │   ├── compat/               # pinned commits, patches.py (chatbot runtime patches + guards), health checks
 │   ├── overrides/            # doctype classes: whatsapp_message, whatsapp_templates, bulk_whatsapp_message
@@ -328,8 +328,8 @@ Estimates assume **1 experienced Frappe + Vue developer**.
 
 ## 10. Decisions needed before Phase 0
 1. **Bench path** and **Frappe/ERPNext versions** (v15, v16 or both). **Note:** the conversation/episode now maps to ERPNext **Issue** — confirm Issue (ERPNext Support) stays in core for the targeted version. If a version drops it in favour of the separate Helpdesk app (HD Ticket), fall back to HD Ticket or a custom DocType (which re-incurs the SLA-genericization work).
-2. **Commons Clause:** will you sell `whatsapp_desk` or charge for chatbot-based services? If yes, contact the author first.
-3. **License** for `whatsapp_desk` (MIT recommended).
+2. **Commons Clause:** will you sell `whatsapp_flow` or charge for chatbot-based services? If yes, contact the author first.
+3. **License** for `whatsapp_flow` (MIT recommended).
 4. **Meta:**
    - Is the app secret available? (Required because the webhook fails closed.)
    - Is the Meta app a Tech Provider (for Embedded Signup)?
