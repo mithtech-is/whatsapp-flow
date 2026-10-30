@@ -487,7 +487,7 @@ def run_voice():
 def run_platform():
     """Phase 5: webhook SSRF scoping + Item catalog feed + guarded sync + audit report."""
     from whatsapp_flow.wa_platform import webhooks, catalog
-    from whatsapp_flow.wa_platform import profile, signup  # noqa: F401 (import-ability)
+    from whatsapp_flow.wa_platform import profile  # noqa: F401 (import-ability)
 
     try:
         _ensure_account()  # default outgoing account so catalog.sync() reaches the guard
@@ -523,7 +523,6 @@ def run_platform():
         _out(f"catalog sync (guarded): {res}")
 
         _out(f"audit report exists={bool(frappe.db.exists('Report', 'WA Audit Trail'))} "
-             f"meta_app_fields={bool(frappe.get_meta('WhatsApp Settings').get_field('wd_meta_app_id'))} "
              f"catalog_field={bool(frappe.get_meta('WhatsApp Account').get_field('wd_catalog_id'))}")
     finally:
         frappe.db.rollback()

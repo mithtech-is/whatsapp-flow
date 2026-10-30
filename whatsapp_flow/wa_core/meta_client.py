@@ -1,6 +1,6 @@
 """Thin Meta Graph API client, keyed on a WhatsApp Account's credentials.
 
-Used by catalog sync, business profile, embedded signup and (later) calling/insights. All calls
+Used by catalog sync, business profile and (later) calling/insights. All calls
 go through frappe's integration request helpers so they're logged and testable.
 """
 

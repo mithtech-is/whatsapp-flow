@@ -410,14 +410,8 @@ CUSTOM_FIELDS = {
             "description": "RSA private key for the encrypted Flows data-exchange endpoint.",
             "insert_after": "wd_patch_health",
         },
-        {"fieldname": "wd_meta_app_id", "label": "Meta App ID (Embedded Signup)",
-         "fieldtype": "Data", "insert_after": "wd_flows_private_key"},
-        {"fieldname": "wd_meta_app_secret", "label": "Meta App Secret (Embedded Signup)",
-         "fieldtype": "Password", "insert_after": "wd_meta_app_id"},
-        {"fieldname": "wd_meta_es_config_id", "label": "Embedded Signup Config ID",
-         "fieldtype": "Data", "insert_after": "wd_meta_app_secret"},
         {"fieldname": "wd_voice_enabled", "label": "Enable Voice (Calling)", "fieldtype": "Check",
-         "insert_after": "wd_meta_es_config_id"},
+         "insert_after": "wd_flows_private_key"},
     ],
     # ----- ERPNext Issue: the conversation / support episode --------------
     "Issue": [
