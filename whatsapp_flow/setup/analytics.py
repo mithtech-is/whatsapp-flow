@@ -26,8 +26,32 @@ def ensure_analytics() -> None:
 
 def _nc(label, doctype, function, filters, aggregate_field=None):
     # Number Card autonames from `label`, so the label IS the record name.
+    #
+    # `filters_json` MUST be a JSON *array* of [doctype, field, op, value] conditions,
+    # never an object `{}`. Frappe's get_percentage_difference() parses filters_json
+    # and calls `.append()` on it; when it's an object it becomes a frappe._dict whose
+    # missing `.append` attribute resolves to None, so `None(...)` raises
+    # "'NoneType' object is not callable" the moment a card renders with stats on.
+    # We also leave show_percentage_stats off — period-over-period deltas aren't
+    # meaningful for these operational cards and that is the only code path that breaks.
+    filters_json = json.dumps(filters)
+
     if frappe.db.exists("Number Card", label):
+        # Repair cards left behind by older builds (object-form filters and/or
+        # percentage stats enabled). Idempotent: only writes when something differs.
+        card = frappe.get_doc("Number Card", label)
+        changed = False
+        if (card.filters_json or "") != filters_json:
+            card.filters_json = filters_json
+            changed = True
+        if card.show_percentage_stats:
+            card.show_percentage_stats = 0
+            changed = True
+        if changed:
+            card.flags.ignore_permissions = True
+            card.save()
         return
+
     doc = frappe.new_doc("Number Card")
     doc.label = label
     doc.type = "Document Type"
@@ -35,20 +59,20 @@ def _nc(label, doctype, function, filters, aggregate_field=None):
     doc.function = function
     if aggregate_field:
         doc.aggregate_function_based_on = aggregate_field
-    doc.filters_json = json.dumps(filters)
+    doc.filters_json = filters_json
     doc.is_public = 1
-    doc.show_percentage_stats = 1
+    doc.show_percentage_stats = 0
     doc.flags.ignore_permissions = True
     doc.insert()
 
 
 def _number_cards() -> None:
     _nc("WA Open Conversations", "Issue", "Count",
-        {"wd_whatsapp_contact": ["is", "set"], "status": "Open"})
+        [["Issue", "wd_whatsapp_contact", "is", "set"], ["Issue", "status", "=", "Open"]])
     _nc("WA Resolved Issues", "Issue", "Count",
-        {"wd_whatsapp_contact": ["is", "set"], "status": ["in", ["Resolved", "Closed"]]})
-    _nc("WA Unread", "WhatsApp Contact", "Sum", {}, aggregate_field="wd_unread_count")
-    _nc("WA Contacts", "WhatsApp Contact", "Count", {})
+        [["Issue", "wd_whatsapp_contact", "is", "set"], ["Issue", "status", "in", ["Resolved", "Closed"]]])
+    _nc("WA Unread", "WhatsApp Contact", "Sum", [], aggregate_field="wd_unread_count")
+    _nc("WA Contacts", "WhatsApp Contact", "Count", [])
 
 
 def _chart(name, label, doctype, chart_type, filters, **kw):
